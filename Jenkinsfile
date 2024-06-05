@@ -1,25 +1,26 @@
 pipeline {
     agent any
-    environment {
-        AWS_ACCOUNT_ID="767398084126"
-        AWS_DEFAULT_REGION="us-east-2"     
-    }
-        
+
     stages {
-        stage('Infrastructure Deployment') {
-           environment {
-             AWS_ACCESS_KEY_ID = credentials('aws_access_key_id')
-             AWS_SECRET_ACCESS_KEY = credentials('aws_secret_access_key')
-           }
-           steps {
-              script {
-                  sh "terraform init"
-                  sh "terraform validate"
-                  sh "terraform plan"
-                  sh "terraform ${action} --auto-approve"
+        stage('Test') {
+            steps {
+                sh 'cd SampleWebApp mvn test'
             }
         }
-               
+        stage('Build') {
+            steps {
+                sh 'cd SampleWebApp && mvn clean package'
+            }
+        }
+        
+        stage('Deploy to Tomcat Web Server') {
+            steps {
+                deploy adapters: [tomcat9(credentialsId: 'tomcatSERVER', path: '', url: 'http://3.145.64.87:8080/')], contextPath: 'webapp', war: '**/*.war'
+            }
+        }
+    }
+}
+    
      }
     }
     
